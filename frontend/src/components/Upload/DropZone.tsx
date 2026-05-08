@@ -32,10 +32,8 @@ export default function DropZone({ folderId, onUploadComplete, maxFiles = 500 }:
     for (const file of files) {
       try {
         setProgress((p) => ({ ...p, [file.name]: 0 }))
-
-        const res = await uploadApi.uploadImage(file, folderId)
+        await uploadApi.uploadImage(file, folderId)
         success.push(file.name)
-
         setProgress((p) => ({ ...p, [file.name]: 100 }))
       } catch (err: any) {
         errors.push(`${file.name}: ${err.response?.data?.detail || '上传失败'}`)
@@ -49,49 +47,45 @@ export default function DropZone({ folderId, onUploadComplete, maxFiles = 500 }:
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,
-    accept: {
-      'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.svg'],
-    },
+    accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.svg'] },
     disabled: uploading,
   })
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* 拖拽区域 */}
       <div
         {...getRootProps()}
         className={clsx(
-          'border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer',
-          isDragActive && !isDragReject && 'border-primary-500 bg-primary-50 dark:bg-primary-900/20',
-          isDragReject && 'border-red-500 bg-red-50 dark:bg-red-900/20',
-          !isDragActive && 'border-[var(--color-border)] hover:border-primary-300 hover:bg-[var(--color-surface)]',
-          uploading && 'cursor-wait opacity-70'
+          'upload-zone group',
+          isDragActive && !isDragReject && 'drag-active',
+          isDragReject && 'border-apple-red bg-red-50 dark:bg-red-900/10',
+          uploading && 'opacity-60 cursor-not-allowed'
         )}
       >
         <input {...getInputProps()} />
 
         <motion.div
-          animate={{ y: isDragActive ? -8 : 0 }}
-          className="text-6xl mb-4"
+          animate={{ y: isDragActive ? -6 : 0, scale: isDragActive ? 1.05 : 1 }}
+          className="text-5xl mb-4"
         >
-          {isDragActive ? (isDragReject ? '❌' : '📥') : '📤'}
+          {isDragActive ? (isDragReject ? '🚫' : '📥') : '☁️'}
         </motion.div>
 
-        <h3 className="text-lg font-medium mb-2">
+        <h3 className="text-[17px] font-semibold mb-1.5 text-[var(--color-text-primary)]">
           {isDragActive
             ? isDragReject
               ? '不支持的文件类型'
               : '释放以上传'
-            : '拖拽图片到此处'
-          }
+            : '拖拽图片到这里'}
         </h3>
 
-        <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-          支持 JPG, PNG, GIF, WebP, AVIF, SVG
+        <p className="text-[13px] text-[var(--color-text-secondary)] mb-3">
+          支持 JPG、PNG、GIF、WebP、AVIF、SVG
         </p>
 
-        <p className="text-xs text-[var(--color-text-secondary)]">
-          或点击选择文件（最多 {maxFiles} 个）
+        <p className="text-[12px] text-[var(--color-text-tertiary)]">
+          或点击选择 · 最多 {maxFiles} 个文件
         </p>
       </div>
 
@@ -99,15 +93,14 @@ export default function DropZone({ folderId, onUploadComplete, maxFiles = 500 }:
       {uploading && Object.keys(progress).length > 0 && (
         <div className="space-y-2">
           {Object.entries(progress).map(([name, percent]) => (
-            <div key={name} className="flex items-center gap-3">
-              <span className="text-sm truncate flex-1">{name}</span>
-              <div className="w-32 h-2 bg-[var(--color-surface)] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary-500 transition-all duration-300"
-                  style={{ width: `${percent}%` }}
-                />
+            <div key={name} className="flex items-center gap-3 px-1">
+              <span className="text-[12px] truncate flex-1 text-[var(--color-text-secondary)]">{name}</span>
+              <div className="w-32">
+                <div className="progress-apple">
+                  <div className="progress-apple-fill" style={{ width: `${percent}%` }} />
+                </div>
               </div>
-              <span className="text-xs text-[var(--color-text-secondary)] w-12 text-right">
+              <span className="text-[11px] text-[var(--color-text-tertiary)] w-10 text-right">
                 {percent}%
               </span>
             </div>
@@ -117,16 +110,20 @@ export default function DropZone({ folderId, onUploadComplete, maxFiles = 500 }:
 
       {/* 上传结果 */}
       {!uploading && results.success.length > 0 && (
-        <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-          <p className="text-sm text-green-700 dark:text-green-300">
-            ✅ 成功上传 {results.success.length} 个文件
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+        >
+          <p className="text-[14px] text-green-700 dark:text-green-300 font-medium">
+            ✓ 成功上传 {results.success.length} 个文件
           </p>
           {results.errors.length > 0 && (
-            <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-              ❌ {results.errors.length} 个文件上传失败
+            <p className="text-[13px] text-apple-red mt-2">
+              ✗ {results.errors.length} 个文件上传失败
             </p>
           )}
-        </div>
+        </motion.div>
       )}
     </div>
   )
