@@ -7,11 +7,12 @@ import clsx from 'clsx'
 interface ImagePreviewProps {
   image: ImageItem | null
   onClose: () => void
+  onDelete?: (id: string) => void
 }
 
 type LinkFormat = 'markdown' | 'html' | 'url' | 'bbcode'
 
-export default function ImagePreview({ image, onClose }: ImagePreviewProps) {
+export default function ImagePreview({ image, onClose, onDelete }: ImagePreviewProps) {
   const [linkFormat, setLinkFormat] = useState<LinkFormat>('markdown')
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -80,6 +81,12 @@ export default function ImagePreview({ image, onClose }: ImagePreviewProps) {
                 📋 复制链接
               </button>
               <button
+                onClick={() => { if (confirm('确定删除该图片吗？')) onDelete?.(image.id) }}
+                className="w-8 h-8 flex items-center justify-center bg-white/20 hover:bg-red-500/70 rounded-lg text-white transition-colors"
+              >
+                🗑️
+              </button>
+              <button
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
               >
@@ -99,12 +106,14 @@ export default function ImagePreview({ image, onClose }: ImagePreviewProps) {
 
           {/* 底部信息 */}
           <div className="px-4 py-3 border-t border-[var(--color-border)] bg-[var(--color-bg)]">
-            <div className="flex items-center gap-6 text-sm text-[var(--color-text-secondary)]">
+            <div className="flex items-center flex-wrap gap-3 text-sm text-[var(--color-text-secondary)]">
               {image.width && image.height && (
-                <span>{image.width} × {image.height}</span>
+                <><span>{image.width} × {image.height}</span><span className="text-[var(--color-border)]">·</span></>
               )}
               <span>{formatFileSize(image.file_size)}</span>
+              <span className="text-[var(--color-border)]">·</span>
               <span>{formatDate(image.created_at)}</span>
+              <span className="text-[var(--color-border)]">·</span>
               <span>👁 {image.view_count}</span>
               {image.tags?.length > 0 && (
                 <div className="flex gap-1">
@@ -127,38 +136,50 @@ export default function ImagePreview({ image, onClose }: ImagePreviewProps) {
         <AnimatePresence>
           {showLinkModal && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute inset-0 flex items-center justify-center bg-black/50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center"
+              style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)' }}
               onClick={() => setShowLinkModal(false)}
             >
-              <div
-                className="bg-[var(--color-bg)] rounded-2xl p-6 w-full max-w-md shadow-2xl"
+              <motion.div
+                initial={{ scale: 0.92, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.92, opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-lg font-medium mb-4">📋 复制图片链接</h3>
+                <h3 className="text-[17px] font-semibold mb-5 text-[var(--color-text-primary)]">
+                  复制图片链接
+                </h3>
 
                 {/* 格式选择 */}
-                <div className="flex gap-2 mb-4">
-                  {(['markdown', 'html', 'url', 'bbcode'] as LinkFormat[]).map((format) => (
+                <div className="flex gap-1.5 p-1 bg-[var(--color-bg-sunken)] rounded-xl mb-5">
+                  {([
+                    { key: 'markdown', label: 'MARKDOWN' },
+                    { key: 'html', label: 'HTML' },
+                    { key: 'url', label: 'URL' },
+                    { key: 'bbcode', label: 'BBCode' },
+                  ] as const).map(({ key, label }) => (
                     <button
-                      key={format}
-                      onClick={() => setLinkFormat(format)}
+                      key={key}
+                      onClick={() => setLinkFormat(key)}
                       className={clsx(
-                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                        linkFormat === format
-                          ? 'bg-primary-500 text-white'
-                          : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)]'
+                        'flex-1 py-1.5 rounded-lg text-[12px] font-semibold tracking-wide transition-all',
+                        linkFormat === key
+                          ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
+                          : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
                       )}
                     >
-                      {format.toUpperCase()}
+                      {label}
                     </button>
                   ))}
                 </div>
 
                 {/* 链接文本 */}
-                <div className="p-3 bg-[var(--color-surface)] rounded-xl font-mono text-sm mb-4 break-all">
+                <div className="p-4 bg-[var(--color-bg-sunken)] rounded-xl font-mono text-[13px] text-[var(--color-text-primary)] mb-5 break-all leading-relaxed border border-[var(--color-border)]">
                   {getLinkText()}
                 </div>
 
@@ -167,22 +188,22 @@ export default function ImagePreview({ image, onClose }: ImagePreviewProps) {
                   <button
                     onClick={handleCopy}
                     className={clsx(
-                      'flex-1 py-2.5 rounded-xl font-medium transition-all',
+                      'flex-1 py-3 rounded-xl font-semibold text-[14px] transition-all shadow-sm',
                       copied
                         ? 'bg-green-500 text-white'
                         : 'bg-primary-500 text-white hover:bg-primary-600'
                     )}
                   >
-                    {copied ? '✅ 已复制' : '📋 复制'}
+                    {copied ? '已复制到剪贴板' : '复制链接'}
                   </button>
                   <button
                     onClick={() => setShowLinkModal(false)}
-                    className="px-4 py-2.5 rounded-xl font-medium bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] transition-colors"
+                    className="px-5 py-3 rounded-xl font-semibold text-[14px] bg-[var(--color-bg-sunken)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] transition-colors"
                   >
                     关闭
                   </button>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

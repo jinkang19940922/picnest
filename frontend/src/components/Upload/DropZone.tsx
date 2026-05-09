@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion } from 'framer-motion'
 import { uploadApi } from '@/api/upload'
@@ -18,18 +18,43 @@ export default function DropZone({ folderId, onUploadComplete, maxFiles = 500 }:
     errors: [],
   })
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+  // Paste-to-upload support
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (uploading) return
+      const items = e.clipboardData?.items
+      if (!items) return
+      const imageFiles: File[] = []
+      for (const item of Array.from(items)) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) imageFiles.push(file)
+        }
+      }
+      if (imageFiles.length > 0) {
+        e.preventDefault()
+        doUpload(imageFiles)
+      }
+    }
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  }, [uploading, folderId, maxFiles, onUploadComplete])
+
+  const doUpload = useCallback(async (files: File[]) => {
+    const acceptedFiles = files.filter(f =>
+      ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'image/svg+xml'].includes(f.type)
+    )
     if (acceptedFiles.length === 0) return
 
     setUploading(true)
     setProgress({})
     setResults({ success: [], errors: [] })
 
-    const files = acceptedFiles.slice(0, maxFiles)
+    const toUpload = acceptedFiles.slice(0, maxFiles)
     const success: string[] = []
     const errors: string[] = []
 
-    for (const file of files) {
+    for (const file of toUpload) {
       try {
         setProgress((p) => ({ ...p, [file.name]: 0 }))
         await uploadApi.uploadImage(file, folderId)
@@ -44,6 +69,10 @@ export default function DropZone({ folderId, onUploadComplete, maxFiles = 500 }:
     setUploading(false)
     onUploadComplete?.()
   }, [folderId, maxFiles, onUploadComplete])
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    doUpload(acceptedFiles)
+  }, [doUpload])
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,

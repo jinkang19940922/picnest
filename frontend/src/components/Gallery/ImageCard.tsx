@@ -1,75 +1,134 @@
 import { motion } from 'framer-motion'
 import type { ImageItem } from '@/types'
 import clsx from 'clsx'
+import { useState } from 'react'
 
 interface ImageCardProps {
   image: ImageItem
   isSelected: boolean
   onSelect: () => void
   onPreview: () => void
+  onDelete?: (id: string) => void
 }
 
-export default function ImageCard({ image, isSelected, onSelect, onPreview }: ImageCardProps) {
+function formatBytes(bytes: number): string {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+export default function ImageCard({ image, isSelected, onSelect, onPreview, onDelete }: ImageCardProps) {
+  const [imgError, setImgError] = useState(false)
+
+  const thumbUrl =
+    image.thumbnails?.large ||
+    image.thumbnails?.medium ||
+    image.thumbnails?.small ||
+    image.url
+
+  const displayUrl = imgError
+    ? (image.thumbnails?.small || image.url)
+    : thumbUrl
+
+  const infoParts: string[] = []
+  if (image.width && image.height) infoParts.push(`${image.width} x ${image.height}`)
+  if (image.file_size) infoParts.push(formatBytes(image.file_size))
+
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       className={clsx(
-        'group relative rounded-2xl overflow-hidden cursor-pointer bg-[var(--color-surface)] shadow-apple-sm hover:shadow-apple-lg transition-all duration-300',
-        isSelected && 'ring-2 ring-primary-500 ring-offset-2 ring-offset-[var(--color-bg-base)]'
+        'group relative rounded-2xl overflow-hidden cursor-pointer break-inside-avoid',
+        'bg-[var(--color-surface)]',
+        'shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.14)]',
+        'transition-all duration-300 ease-out',
+        isSelected
+          ? 'ring-[2.5px] ring-primary-500 shadow-[0_0_0_4px_rgba(0,122,255,0.12),0_8px_32px_rgba(0,0,0,0.14)]'
+          : 'hover:scale-[1.025] hover:-translate-y-0.5'
       )}
       onClick={onPreview}
     >
-      {/* 图片 */}
-      <img
-        src={image.thumbnails?.large || image.thumbnails?.medium || image.thumbnails?.small || image.url}
-        alt={image.original_name}
-        loading="lazy"
-        className="w-full object-cover"
-        style={{ aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto' }}
-      />
+      {/* Image */}
+      <div className="relative overflow-hidden">
+        <img
+          src={displayUrl}
+          alt={image.original_name}
+          loading="lazy"
+          onError={() => setImgError(true)}
+          className="w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          style={{
+            aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
+            minHeight: '80px',
+          }}
+        />
 
-      {/* 悬停遮罩 */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Load error placeholder */}
+        {imgError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-bg-sunken)]">
+            <span className="text-3xl opacity-30">IMG</span>
+          </div>
+        )}
 
-      {/* 选择框 */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onSelect() }}
-        className={clsx(
-          'absolute top-3 left-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200',
-          isSelected
-            ? 'bg-primary-500 border-primary-500 text-white'
-            : 'bg-white/60 border-white/80 text-transparent group-hover:text-[var(--color-text-secondary)]'
-        )}
-      >
-        {isSelected && (
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-          </svg>
-        )}
-      </button>
+        {/* Top gradient */}
+        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-      {/* 悬停时显示的文件名 */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <p className="text-white text-[11px] font-medium truncate drop-shadow-md">
-          {image.original_name}
-        </p>
-        {image.width && image.height && (
-          <p className="text-white/70 text-[10px] mt-0.5">
-            {image.width} × {image.height}
-          </p>
-        )}
+        {/* Select checkbox */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onSelect() }}
+          className={clsx(
+            'absolute top-2.5 left-2.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200',
+            isSelected
+              ? 'bg-primary-500 border-primary-500 text-white scale-100'
+              : 'bg-white/50 backdrop-blur-sm border-white/80 text-transparent group-hover:text-[var(--color-text-secondary)] group-hover:scale-110'
+          )}
+        >
+          {isSelected && (
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </button>
+
+        {/* Top-right action buttons */}
+        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+          <ActionButton
+            icon="link"
+            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(image.url) }}
+          />
+          <ActionButton icon="eye" onClick={(e) => { e.stopPropagation(); onPreview() }} />
+          <ActionButton
+            icon="trash"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirm('确定删除该图片吗？')) onDelete?.(image.id)
+            }}
+          />
+        </div>
+
+        {/* Bottom info overlay */}
+        <div className="absolute inset-x-0 bottom-0 p-3 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+          <div className="bg-black/55 backdrop-blur-md rounded-xl p-2.5">
+            <p className="text-white text-[11px] font-medium truncate leading-tight">
+              {image.original_name}
+            </p>
+            {infoParts.length > 0 && (
+              <p className="text-white/70 text-[10px] mt-0.5">
+                {infoParts.join(' · ')}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* 操作按钮组 */}
-      <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <ActionButton icon="link" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(image.url) }} />
-        <ActionButton icon="eye" onClick={(e) => { e.stopPropagation(); onPreview() }} />
-        <ActionButton icon="trash" onClick={(e) => { e.stopPropagation(); /* TODO: delete */ }} />
-      </div>
-    </div>
+    </motion.div>
   )
 }
 
-function ActionButton({ icon, onClick }: { icon: string; onClick: (e: any) => void }) {
+function ActionButton({ icon, onClick }: { icon: string; onClick: (e: React.MouseEvent) => void }) {
   const icons: Record<string, JSX.Element> = {
     link: (
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +151,7 @@ function ActionButton({ icon, onClick }: { icon: string; onClick: (e: any) => vo
   return (
     <button
       onClick={onClick}
-      className="w-7 h-7 rounded-lg bg-black/40 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+      className="w-7 h-7 rounded-lg bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors"
     >
       {icons[icon]}
     </button>

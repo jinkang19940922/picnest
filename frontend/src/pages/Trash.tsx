@@ -1,12 +1,37 @@
 import { useEffect, useState } from 'react'
 import { trashApi } from '@/api/trash'
 import { imagesApi } from '@/api/images'
-import type { ImageItem } from '@/types'
-import { formatFileSize, formatDate } from '@/api/client'
+import { formatFileSize } from '@/api/client'
 import clsx from 'clsx'
 
+/** 回收站 API 返回的项目类型（与 ImageItem 不同，使用 snake_case） */
+interface TrashItem {
+  id: string
+  filename: string
+  original_name: string
+  storage_path: string
+  thumbnail_small: string
+  thumbnail_medium: string
+  thumbnail_large: string
+  file_size: number
+  mime_type: string
+  width?: number
+  height?: number
+  folder_id?: string
+  user_id: string
+  is_public: number
+  is_starred: number
+  view_count: number
+  download_count: number
+  status: string
+  trashed_at: string
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
 export default function Trash() {
-  const [images, setImages] = useState<ImageItem[]>([])
+  const [images, setImages] = useState<TrashItem[]>([])
   const [meta, setMeta] = useState({ page: 1, per_page: 24, total: 0, total_pages: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -101,9 +126,10 @@ export default function Trash() {
             >
               <div className="relative bg-[var(--color-surface)] aspect-square">
                 <img
-                  src={image.thumbnails?.small || image.url}
+                  src={image.thumbnail_small || image.thumbnail_medium || ''}
                   alt={image.original_name}
                   className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                 />
 
                 {/* 悬停操作 */}

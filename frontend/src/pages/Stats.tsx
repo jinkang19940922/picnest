@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { statsApi } from '@/api/stats'
+import { authApi } from '@/api/auth'
 import type { StatsOverview, StorageStats } from '@/types'
 import { formatFileSize } from '@/api/client'
 
@@ -7,16 +8,19 @@ export default function Stats() {
   const [overview, setOverview] = useState<StatsOverview | null>(null)
   const [storage, setStorage] = useState<StorageStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [storageQuota, setStorageQuota] = useState(1099511627776) // default 1 TB
 
   useEffect(() => {
     const fetch = async () => {
       try {
-        const [overviewRes, storageRes] = await Promise.all([
+        const [overviewRes, storageRes, userRes] = await Promise.all([
           statsApi.getOverview(),
           statsApi.getStorage(),
+          authApi.getMe(),
         ])
         setOverview(overviewRes.data)
         setStorage(storageRes.data)
+        setStorageQuota(userRes.data.storage_quota || 1099511627776)
       } finally {
         setIsLoading(false)
       }
@@ -72,17 +76,17 @@ export default function Stats() {
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-medium">💾 存储空间</h3>
           <span className="text-sm text-[var(--color-text-secondary)]">
-            {formatFileSize(storage?.used || 0)} / {formatFileSize(storage?.quota || 0)}
+            {storage ? `${formatFileSize(storage.used)} / ${formatFileSize(storage.quota)}` : `${formatFileSize(overview?.total_storage || 0)} / 1 TB`}
           </span>
         </div>
         <div className="h-4 bg-[var(--color-border)] rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all"
-            style={{ width: `${Math.min(storage?.used_percent || 0, 100)}%` }}
+            style={{ width: `${Math.min(storage?.used_percent || (overview?.total_storage ? (overview.total_storage / storageQuota) * 100 : 0), 100)}%` }}
           />
         </div>
         <p className="text-sm text-[var(--color-text-secondary)] mt-2">
-          已使用 {storage?.used_percent || 0}%
+          {storage ? `已使用 ${storage.used_percent}%` : `已使用 ${((overview?.total_storage || 0) / storageQuota * 100).toFixed(2)}%`}
         </p>
       </div>
 

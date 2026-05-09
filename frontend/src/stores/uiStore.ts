@@ -6,7 +6,9 @@ type Theme = 'light' | 'dark' | 'system'
 interface UIState {
   theme: Theme
   actualTheme: 'light' | 'dark'
+  sidebarCollapsed: boolean
   setTheme: (theme: Theme) => void
+  toggleSidebar: () => void
 }
 
 const getSystemTheme = (): 'light' | 'dark' => {
@@ -24,12 +26,15 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       theme: 'light',
       actualTheme: 'light',
+      sidebarCollapsed: false,
 
       setTheme: (theme) => {
         const actual = theme === 'system' ? getSystemTheme() : theme
         applyTheme(actual)
         set({ theme, actualTheme: actual })
       },
+
+      toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
     }),
     {
       name: 'picnest-ui',

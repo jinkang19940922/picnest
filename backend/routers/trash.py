@@ -22,14 +22,14 @@ async def get_trash(
     """获取回收站列表"""
     async with get_db() as db:
         offset = (page - 1) * per_page
-        
+
         cursor = await db.execute(
             """SELECT COUNT(*) FROM images
                WHERE user_id = ? AND status = 'trashed'""",
             (current_user["user_id"],),
         )
         total = (await cursor.fetchone())[0]
-        
+
         cursor = await db.execute(
             """SELECT * FROM images
                WHERE user_id = ? AND status = 'trashed'
@@ -38,7 +38,7 @@ async def get_trash(
             (current_user["user_id"], per_page, offset),
         )
         images = await cursor.fetchall()
-        
+
         return {
             "data": [dict(img) for img in images],
             "meta": {
@@ -54,14 +54,15 @@ async def get_trash(
 async def empty_trash(current_user: dict = Depends(get_current_user)):
     """清空回收站"""
     import os
-    
+
     async with get_db() as db:
         cursor = await db.execute(
             "SELECT * FROM images WHERE user_id = ? AND status = 'trashed'",
             (current_user["user_id"],),
         )
-        images = await cursor.fetchall()
-        
+        images_raw = await cursor.fetchall()
+        images = [dict(img) for img in images_raw]
+
         deleted_count = 0
         for img in images:
             # 删除文件
@@ -69,42 +70,43 @@ async def empty_trash(current_user: dict = Depends(get_current_user)):
                 path = img["storage_path"]
                 if os.path.exists(path):
                     os.remove(path)
-            
+
             for size in ["small", "medium", "large"]:
                 key = f"thumbnail_{size}"
                 if img.get(key):
                     path = img[key]
                     if os.path.exists(path):
                         os.remove(path)
-            
+
             deleted_count += 1
-        
+
         # 清空数据库记录
         await db.execute(
             "DELETE FROM images WHERE user_id = ? AND status = 'trashed'",
             (current_user["user_id"],),
         )
-        
+
         await db.commit()
-        
+
         return {"message": f"已永久删除 {deleted_count} 张图片"}
 
 
 @router.post("/auto-cleanup")
 async def auto_cleanup():
-    """自动清理过期回收站图片（可由定时任务触发）"""
+    """自动清理过期回收站图片(可由定时任务触发)"""
     import os
-    
+
     async with get_db() as db:
         cleanup_days = settings.trash.auto_cleanup_days
         cutoff = (datetime.utcnow() - timedelta(days=cleanup_days)).isoformat()
-        
+
         cursor = await db.execute(
             "SELECT * FROM images WHERE status = 'trashed' AND trashed_at < ?",
             (cutoff,),
         )
-        images = await cursor.fetchall()
-        
+        images_raw = await cursor.fetchall()
+        images = [dict(img) for img in images_raw]
+
         deleted_count = 0
         for img in images:
             if img.get("storage_path") and os.path.exists(img["storage_path"]):
@@ -113,13 +115,13 @@ async def auto_cleanup():
                 key = f"thumbnail_{size}"
                 if img.get(key) and os.path.exists(img[key]):
                     os.remove(img[key])
-            
+
             deleted_count += 1
-        
+
         await db.execute(
             "DELETE FROM images WHERE status = 'trashed' AND trashed_at < ?",
             (cutoff,),
         )
         await db.commit()
-        
-        return {"message": f"自动清理完成，删除了 {deleted_count} 张过期图片"}
+
+        return {"message": f"自动清理完成,删除了 {deleted_count} 张过期图片"}

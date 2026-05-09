@@ -146,6 +146,7 @@ export default function Gallery() {
           onLoadMore={handleLoadMore}
           isLoadingMore={isLoadingMore}
           hasMore={meta.page < meta.total_pages}
+          onDelete={deleteImage}
         />
       </div>
 
@@ -153,6 +154,7 @@ export default function Gallery() {
       <ImagePreview
         image={previewImage}
         onClose={() => setPreview(null)}
+        onDelete={async (id) => { await deleteImage(id); setPreview(null) }}
       />
     </div>
   )
