@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import ImageCard from './ImageCard'
 import type { ImageItem } from '@/types'
 import clsx from 'clsx'
-import { useRef } from 'react'
 
 interface MasonryGridProps {
   images: ImageItem[]
@@ -10,10 +9,10 @@ interface MasonryGridProps {
   selectedIds: Set<string>
   onSelect: (id: string) => void
   onPreview: (image: ImageItem) => void
-  onLoadMore?: () => void
   isLoadingMore?: boolean
   hasMore?: boolean
   onDelete?: (id: string) => void
+  sentinelRef?: React.RefObject<HTMLDivElement>
 }
 
 // 瀑布流加载时的骨架屏 — 随机高度模拟真实图片
@@ -37,13 +36,11 @@ export default function MasonryGrid({
   selectedIds,
   onSelect,
   onPreview,
-  onLoadMore,
   isLoadingMore,
   hasMore = true,
   onDelete,
+  sentinelRef,
 }: MasonryGridProps) {
-  const sentinelRef = useRef<HTMLDivElement>(null)
-
   if (isLoading) {
     return (
       <div>
@@ -109,12 +106,7 @@ export default function MasonryGrid({
               加载中...
             </div>
           ) : (
-            <button
-              onClick={onLoadMore}
-              className="px-6 py-2.5 rounded-full bg-[var(--color-text-primary)] text-white text-[13px] font-medium shadow-apple-sm hover:opacity-80 transition-opacity"
-            >
-              加载更多
-            </button>
+            <p className="text-[12px] text-[var(--color-text-tertiary)] py-4">继续滚动加载更多</p>
           )}
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useImageStore } from '@/stores/imageStore'
 import { useFolderStore } from '@/stores/folderStore'
+import { useUIStore } from '@/stores/uiStore'
 import MasonryGrid from '@/components/Gallery/MasonryGrid'
 import ImagePreview from '@/components/Preview/ImagePreview'
 import { imagesApi } from '@/api/images'
@@ -24,7 +25,8 @@ export default function Gallery() {
   } = useImageStore()
 
   const { selectedFolderId } = useFolderStore()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const { setPreviewOpen } = useUIStore()
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   // 初始加载
   useEffect(() => {
@@ -36,7 +38,7 @@ export default function Gallery() {
     fetchImages({ folder_id: selectedFolderId || undefined })
   }, [selectedFolderId])
 
-  // 无限滚动
+  // 无限滚动 — IntersectionObserver 监听底部 sentinel
   const handleLoadMore = useCallback(() => {
     if (!isLoadingMore && meta.page < meta.total_pages) {
       loadMore()
@@ -44,18 +46,20 @@ export default function Gallery() {
   }, [isLoadingMore, meta.page, meta.total_pages, loadMore])
 
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container
-      if (scrollHeight - scrollTop - clientHeight < 500) {
-        handleLoadMore()
-      }
-    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore()
+        }
+      },
+      { rootMargin: '300px' }
+    )
 
-    container.addEventListener('scroll', handleScroll, { passive: true })
-    return () => container.removeEventListener('scroll', handleScroll)
+    observer.observe(sentinel)
+    return () => observer.disconnect()
   }, [handleLoadMore])
 
   // 批量删除
@@ -81,7 +85,7 @@ export default function Gallery() {
   }
 
   return (
-    <div ref={containerRef} className="h-full flex flex-col">
+    <div className="h-full flex flex-col">
       {/* 顶部工具栏 */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         {/* 搜索 */}
@@ -142,19 +146,19 @@ export default function Gallery() {
           isLoading={isLoading}
           selectedIds={selectedIds}
           onSelect={toggleSelect}
-          onPreview={setPreview}
-          onLoadMore={handleLoadMore}
+          onPreview={(img) => { setPreview(img); setPreviewOpen(true) }}
           isLoadingMore={isLoadingMore}
           hasMore={meta.page < meta.total_pages}
           onDelete={deleteImage}
+          sentinelRef={sentinelRef}
         />
       </div>
 
       {/* 预览弹窗 */}
       <ImagePreview
         image={previewImage}
-        onClose={() => setPreview(null)}
-        onDelete={async (id) => { await deleteImage(id); setPreview(null) }}
+        onClose={() => { setPreview(null); setPreviewOpen(false) }}
+        onDelete={async (id) => { await deleteImage(id); setPreview(null); setPreviewOpen(false) }}
       />
     </div>
   )

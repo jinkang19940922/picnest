@@ -96,13 +96,10 @@ export default function ImageCard({ image, isSelected, onSelect, onPreview, onDe
 
         {/* Top-right action buttons */}
         <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
-          <ActionButton
-            icon="link"
-            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(image.url) }}
-          />
-          <ActionButton icon="eye" onClick={(e) => { e.stopPropagation(); onPreview() }} />
+          <ActionButton icon="eye" title="预览大图" onClick={(e) => { e.stopPropagation(); onPreview() }} />
           <ActionButton
             icon="trash"
+            title="删除图片"
             onClick={(e) => {
               e.stopPropagation()
               if (confirm('确定删除该图片吗？')) onDelete?.(image.id)
@@ -128,7 +125,7 @@ export default function ImageCard({ image, isSelected, onSelect, onPreview, onDe
   )
 }
 
-function ActionButton({ icon, onClick }: { icon: string; onClick: (e: React.MouseEvent) => void }) {
+function ActionButton({ icon, onClick, title }: { icon: string; onClick: (e: React.MouseEvent) => void; title?: string }) {
   const icons: Record<string, JSX.Element> = {
     link: (
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,6 +148,7 @@ function ActionButton({ icon, onClick }: { icon: string; onClick: (e: React.Mous
   return (
     <button
       onClick={onClick}
+      title={title}
       className="w-7 h-7 rounded-lg bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors"
     >
       {icons[icon]}

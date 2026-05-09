@@ -1,5 +1,6 @@
 import Header from './Header'
 import Sidebar from './Sidebar'
+import { useUIStore } from '@/stores/uiStore'
 import { motion } from 'framer-motion'
 
 interface LayoutProps {
@@ -7,12 +8,17 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const isPreviewOpen = useUIStore((s) => s.isPreviewOpen)
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--color-bg-base)' }}>
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto">
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{ overflowY: isPreviewOpen ? 'hidden' : undefined, overscrollBehavior: 'contain' }}
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

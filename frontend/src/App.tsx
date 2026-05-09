@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
+import { useUIStore } from '@/stores/uiStore'
 import Layout from '@/components/Layout/Layout'
 import Login from '@/pages/Login'
 import Gallery from '@/pages/Gallery'
@@ -48,12 +49,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const { token, fetchUser } = useAuthStore()
+  const isPreviewOpen = useUIStore((s) => s.isPreviewOpen)
 
   useEffect(() => {
     if (token) {
       fetchUser()
     }
   }, [token])
+
+  // 预览弹窗打开时彻底禁止背景滚动（body 层面，阻止触控板手势穿透）
+  useEffect(() => {
+    if (isPreviewOpen) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.overscrollBehavior = 'none'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.overscrollBehavior = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isPreviewOpen])
 
   return (
     <Routes>

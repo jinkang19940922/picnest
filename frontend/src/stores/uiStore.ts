@@ -7,8 +7,10 @@ interface UIState {
   theme: Theme
   actualTheme: 'light' | 'dark'
   sidebarCollapsed: boolean
+  isPreviewOpen: boolean
   setTheme: (theme: Theme) => void
   toggleSidebar: () => void
+  setPreviewOpen: (open: boolean) => void
 }
 
 const getSystemTheme = (): 'light' | 'dark' => {
@@ -27,6 +29,7 @@ export const useUIStore = create<UIState>()(
       theme: 'light',
       actualTheme: 'light',
       sidebarCollapsed: false,
+      isPreviewOpen: false,
 
       setTheme: (theme) => {
         const actual = theme === 'system' ? getSystemTheme() : theme
@@ -35,6 +38,7 @@ export const useUIStore = create<UIState>()(
       },
 
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      setPreviewOpen: (open) => set({ isPreviewOpen: open }),
     }),
     {
       name: 'picnest-ui',
