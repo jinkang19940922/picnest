@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
+import { formatFileSize } from '@/api/client'
 import clsx from 'clsx'
 
 export default function Settings() {
@@ -14,8 +15,6 @@ export default function Settings() {
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     setTheme(newTheme)
-    document.documentElement.setAttribute('data-theme', newTheme === 'system' ? 'light' : newTheme)
-    localStorage.setItem('picnest-theme', newTheme)
   }
 
   return (
@@ -120,7 +119,15 @@ export default function Settings() {
           </div>
           <div className="flex justify-between">
             <span>存储配额</span>
-            <span className="font-medium text-[var(--color-text)]">5 GB</span>
+            <span className="font-medium text-[var(--color-text)]">{user ? formatFileSize(user.storage_quota) : '未知'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>已用空间</span>
+            <span className="font-medium text-[var(--color-text)]">{user ? formatFileSize(user.storage_used) : '未知'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>剩余空间</span>
+            <span className="font-medium text-[var(--color-text)]">{user ? formatFileSize(user.storage_quota - user.storage_used) : '未知'}</span>
           </div>
         </div>
       </div>

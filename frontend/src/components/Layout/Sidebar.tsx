@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useFolderStore } from '@/stores/folderStore'
 import { useImageStore } from '@/stores/imageStore'
 import clsx from 'clsx'
@@ -10,9 +10,9 @@ export default function Sidebar() {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
 
-  useState(() => {
+  useEffect(() => {
     fetchFolders()
-  })
+  }, [fetchFolders])
 
   const handleFolderClick = (folderId: string | null) => {
     selectFolder(folderId)
