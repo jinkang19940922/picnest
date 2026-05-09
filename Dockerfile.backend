@@ -20,6 +20,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制后端代码
 COPY backend/ .
 
+# 复制健康检查脚本（替代 curl）
+COPY backend/healthcheck.py /usr/local/bin/healthcheck.py
+RUN chmod +x /usr/local/bin/healthcheck.py
+
 # 创建数据目录
 RUN mkdir -p /app/data/images/{originals,thumbnails/{small,medium,large},watermarked}
 
