@@ -2,7 +2,7 @@ app:
   name: "PicNest"
   version: "1.0.0"
   debug: false
-  secret_key: "change-this-to-a-secure-random-string-in-production"
+  secret_key: "IRwIKNkNPeVxdEWmHn4nM2wLLx1q81Kia19sbgrem6w"
   base_url: "http://localhost:8080"
 
 database:
