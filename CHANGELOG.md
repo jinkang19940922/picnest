@@ -1,3 +1,19 @@
+# Changelog - v1.1.1 (2026-05-11 13:12)
+
+## 🐛 Bug Fixes
+
+- 无
+
+## ✨ Features & Improvements
+
+- config.yaml 格式规范化（去除多余引号、空格整理、注释清理）
+
+## 📦 Files Changed
+
+- config.yaml（格式规范化）
+
+---
+
 # Changelog - v1.1.0 (2026-05-09)
 
 ## 🐛 Bug Fixes

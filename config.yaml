@@ -1,6 +1,6 @@
 app:
   name: PicNest
-  version: 1.1.0
+  version: 1.1.1
   debug: false
   secret_key: IRwIKNkNPeVxdEWmHn4nM2wLLx1q81Kia19sbgrem6w
   base_url: http://localhost:8080
