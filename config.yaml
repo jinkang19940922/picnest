@@ -1,30 +1,27 @@
 app:
-  name: "PicNest"
-  version: "1.0.0"
+  name: PicNest
+  version: 1.1.0
   debug: false
-  secret_key: "IRwIKNkNPeVxdEWmHn4nM2wLLx1q81Kia19sbgrem6w"
-  base_url: "http://localhost:8080"
-
+  secret_key: IRwIKNkNPeVxdEWmHn4nM2wLLx1q81Kia19sbgrem6w
+  base_url: http://localhost:8080
 database:
-  type: "sqlite"
-  path: "./data/picnest.db"
-
+  type: sqlite
+  path: ./data/picnest.db
 storage:
-  upload_path: "./data/images"
-  db_path: "./data/picnest.db"
-  max_file_size: 104857600  # 100MB 单文件限制
-  max_batch_size: 500       # 单批次最多500个文件
+  upload_path: ./data/images
+  db_path: ./data/picnest.db
+  max_file_size: 104857600
+  max_batch_size: 500
   allowed_extensions:
-    - ".jpg"
-    - ".jpeg"
-    - ".png"
-    - ".gif"
-    - ".webp"
-    - ".avif"
-    - ".svg"
-    - ".bmp"
-    - ".tiff"
-
+  - .jpg
+  - .jpeg
+  - .png
+  - .gif
+  - .webp
+  - .avif
+  - .svg
+  - .bmp
+  - .tiff
 thumbnail:
   enabled: true
   quality: 85
@@ -32,27 +29,23 @@ thumbnail:
     small: 150
     medium: 300
     large: 600
-
 watermark:
   enabled: false
-  text: "PicNest"
+  text: PicNest
   font_size: 24
-  position: "bottom-right"
+  position: bottom-right
   opacity: 0.5
-  color: "#FFFFFF"
-
+  color: '#FFFFFF'
 user:
-  default_quota: 1099511627776  # 1TB (1024 * 1024 * 1024)
-  max_quota: 1127426918400     # 1.05TB 字节数（略大于1TB，留余量）
+  default_quota: 1099511627776
+  max_quota: 1127426918400
   registration_enabled: true
-  default_role: "user"
-
+  default_role: user
 trash:
   retention_days: 30
   auto_cleanup: true
-
 security:
   password_min_length: 6
-  token_expire_hours: 168  # 7 days
+  token_expire_hours: 168
   max_login_attempts: 5
   lockout_minutes: 30
